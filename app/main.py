@@ -129,8 +129,8 @@ def create_app(
             img = Image.open(BytesIO(image_bytes))
             image_height = img.size[1]
 
-            # ── 模板映射 ────────────────────────────────────────
-            groups = svc.template.map_results(ocr_results, image_height)
+            # ── 模板映射（v3: 返回 groups + debug_trace）───────────
+            groups, debug_trace = svc.template.map_results(ocr_results, image_height)
 
             # ── 可靠性评估 ────────────────────────────────────────
             reliability = evaluate_reliability(groups, settings)
@@ -151,6 +151,7 @@ def create_app(
                 reliability=reliability,
                 device=svc.ocr.device,
                 ocr_boxes=boxes,
+                debug_trace=debug_trace,
             )
 
         except AppError:

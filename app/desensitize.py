@@ -72,6 +72,12 @@ FIELD_DESENSITIZE_MAP: dict[str, callable] = {
     "amount_without_tax": desensitize_amount,
     "tax_amount": desensitize_amount,
     "amount_with_tax": desensitize_amount,
+    # v7: 大写金额脱敏——保留前2字，后面替换为****
+    "amount_without_tax_upper": desensitize_company_name,
+    "amount_with_tax_upper": desensitize_company_name,
+    # v8: 出行信息脱敏
+    "traveler_name": desensitize_company_name,
+    "traveler_id_number": desensitize_tax_number,
 }
 
 

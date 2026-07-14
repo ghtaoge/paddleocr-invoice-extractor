@@ -59,6 +59,7 @@ class InvoiceResult(ContractModel):
     reliability: Reliability
     device: str
     ocr_boxes: list[dict]  # PaddleOCR 原始检测框，前端标注用
+    debug_trace: list[dict] = []  # v2: 诊断追踪——每步匹配细节
 
     @field_validator("device")
     @classmethod
