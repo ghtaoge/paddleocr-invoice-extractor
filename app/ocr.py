@@ -2,12 +2,21 @@
 
 模型懒加载、单例管理、设备自动选择。
 首次识别时自动下载 PP-OCRv4 模型权重（约 10 MB），
-后续识别复用本地缓存。"""
+后续识别复用本地缓存。
+
+注意：Windows 上 PaddlePaddle 的 OneDNN 实现有兼容性问题，
+必须在导入 paddle 之前设置 FLAGS_use_mkldnn=0 禁用 OneDNN。"""
 
 from __future__ import annotations
 
+import os
 import threading
 from io import BytesIO
+
+# ── 禁用 OneDNN——必须在 import paddle 之前设置 ────────────────
+# Windows 上 PaddlePaddle 的 OneDNN 实现会导致 fused_conv2d 报错，
+# 禁用后回退到原生 CPU 推理，功能不受影响，只是推理速度稍慢。
+os.environ["FLAGS_use_mkldnn"] = "0"
 
 import numpy as np
 from PIL import Image
@@ -40,6 +49,12 @@ class OCRRunner:
 
             self._status = "loading"
             try:
+                # ── 禁用 OneDNN——Windows 上 PaddlePaddle 3.x 的 OneDNN
+                #    实现导致 fused_conv2d 报错（已知问题），
+                #    使用 paddle.set_flags 在运行时禁用。
+                import paddle
+                paddle.set_flags({"FLAGS_use_mkldnn": 0})
+
                 from paddleocr import PaddleOCR
 
                 self._ocr = PaddleOCR(

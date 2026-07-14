@@ -16,7 +16,7 @@ dependencies = [
   "pydantic-settings>=2.7,<3.0",
   "numpy>=1.26,<3.0",
   "paddleocr>=2.9,<3.0",
-  "paddlepaddle>=3.0,<4.0",
+  "paddlepaddle>=3.0.0,<3.1.0",  # 3.1+ 有 Windows OneDNN 兼容性问题
   "pillow>=11.0,<12.0",
 ]
 
