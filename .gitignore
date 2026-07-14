@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# 环境
+.env
+.venv/
+venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# PaddleOCR 缓存
+inference/
+
+# 发票测试图片（包含敏感信息，不提交）
+tests/fixtures/*.jpg
+tests/fixtures/*.png
+tests/fixtures/*.bmp
+
+# 其他
+*.log
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+output/
