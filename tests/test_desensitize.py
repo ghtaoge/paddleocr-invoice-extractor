@@ -1,7 +1,5 @@
 """测试脱敏函数——各种边界和典型值。"""
 
-import pytest
-
 from app.desensitize import (
     desensitize_amount,
     desensitize_company_name,

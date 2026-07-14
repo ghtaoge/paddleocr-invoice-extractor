@@ -1,7 +1,8 @@
 """测试前端文件存在性和基本结构。"""
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "app" / "static"
 

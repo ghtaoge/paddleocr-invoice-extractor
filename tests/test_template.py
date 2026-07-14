@@ -1,13 +1,10 @@
 """测试增值税发票模板——区域定位、关键词匹配、可靠性评估。"""
 
-import pytest
-
 from app.config import Settings
-from app.schemas import FieldGroup, InvoiceField, Reliability
+from app.schemas import FieldGroup, InvoiceField
 from app.template import (
     FIELD_DEFINITIONS,
     InvoiceTemplate,
-    REGIONS,
     _classify_region,
     evaluate_reliability,
 )

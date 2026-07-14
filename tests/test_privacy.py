@@ -3,8 +3,6 @@
 import subprocess
 import sys
 
-import pytest
-
 from scripts.privacy_scan import BLOCKED_SUFFIXES, EXCLUDE_PATHS
 
 

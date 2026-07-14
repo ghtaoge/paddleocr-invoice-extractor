@@ -16,19 +16,18 @@ from PIL import Image
 
 from app.config import Settings, get_settings
 from app.errors import (
-    AppError,
     CONCURRENT_REQUEST,
     FILE_TOO_LARGE,
     INTERNAL_ERROR,
     NO_TEXT_DETECTED,
     UNSUPPORTED_FORMAT,
+    AppError,
 )
 from app.ocr import OCRRunner
 from app.schemas import (
     HealthResponse,
     InvoiceResult,
     PublicError,
-    Reliability,
 )
 from app.template import InvoiceTemplate, evaluate_reliability
 

@@ -1,11 +1,11 @@
 """测试业务异常类——字段值和 HTTP 状态码。"""
 
 from app.errors import (
-    AppError,
     FILE_TOO_LARGE,
     INTERNAL_ERROR,
     OCR_FAILED,
     UNSUPPORTED_FORMAT,
+    AppError,
 )
 
 

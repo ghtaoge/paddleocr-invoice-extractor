@@ -1,8 +1,5 @@
 """测试应用配置——校验、缓存、冻结行为。"""
 
-import os
-from functools import lru_cache
-
 import pytest
 from pydantic import ValidationError
 

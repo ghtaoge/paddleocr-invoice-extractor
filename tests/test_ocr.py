@@ -1,14 +1,12 @@
 """测试 OCR 引擎——使用假引擎避免下载真实模型。"""
 
 import io
-import threading
-from unittest.mock import MagicMock, patch
 
 import pytest
 from PIL import Image
 
 from app.config import Settings
-from app.errors import AppError, OCR_FAILED
+from app.errors import AppError
 from app.ocr import OCRRunner
 
 

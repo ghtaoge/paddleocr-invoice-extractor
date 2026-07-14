@@ -197,7 +197,7 @@ class InvoiceTemplate:
             # 在所有 OCR 文字中寻找关键词
             best_match: tuple[str, float] = ("", 0.0)
 
-            for i, (region, text, conf, _) in enumerate(annotated):
+            for i, (region, text, _conf, _) in enumerate(annotated):
                 # 关键词必须在对应区域
                 if expected_region and region != expected_region:
                     continue

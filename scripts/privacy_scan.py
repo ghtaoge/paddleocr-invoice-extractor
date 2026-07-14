@@ -9,8 +9,6 @@
 
 import re
 import subprocess
-import sys
-import warnings
 
 # ── 禁止提交的文件后缀 ────────────────────────────────────────
 BLOCKED_SUFFIXES = frozenset(

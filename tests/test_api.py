@@ -2,13 +2,11 @@
 
 import io
 
-import pytest
-from PIL import Image
 from fastapi.testclient import TestClient
+from PIL import Image
 
 from app.config import Settings
 from app.main import Services, create_app
-from app.ocr import OCRRunner
 from app.template import InvoiceTemplate
 
 
