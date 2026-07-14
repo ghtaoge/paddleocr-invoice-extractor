@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="票析 — 增值税发票 OCR 识别工具，快速提取发票结构化数据">
+  <title>票析 · 增值税发票识别</title>
+  <link rel="icon" type="image/svg+xml" href="/static/icons/check.svg">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+
+  <!-- ── Top Status Bar ────────────────────────────────── -->
+  <header class="status-bar" role="banner">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">票</span>
+      <div>
+        <span class="brand-title">票析</span>
+        <span class="brand-subtitle">增值税发票识别</span>
+      </div>
+    </div>
+    <div class="runtime-status" id="runtimeStatus" aria-live="polite">
+      <span class="runtime-dot" id="runtimeDot"></span>
+      <span class="runtime-label" id="runtimeLabel">检测服务状态…</span>
+    </div>
+  </header>
+
+  <!-- ── Main Workspace ────────────────────────────────── -->
+  <main class="workspace" role="main">
+
+    <!-- ── Left Panel: Image ──────────────────────────── -->
+    <section class="panel" id="imagePanel" aria-label="图片上传">
+      <div class="panel-header">
+        <span class="panel-index">01</span>
+        <h2 class="panel-title">发票图片</h2>
+      </div>
+      <div class="panel-body">
+
+        <!-- Dropzone (shown when no image) -->
+        <div class="dropzone" id="dropzone" role="button" tabindex="0"
+             aria-label="点击或拖拽上传发票图片">
+          <svg class="dropzone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <p class="dropzone-text">拖拽发票图片到此处，或 <em>点击选择文件</em></p>
+          <p class="dropzone-hint">支持 JPG / PNG / BMP，最大 10 MB</p>
+        </div>
+        <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.bmp"
+               class="sr-only" aria-hidden="true">
+
+        <!-- Image Preview (shown after upload) -->
+        <div class="image-preview-wrap" id="imagePreview" style="display:none">
+          <img id="previewImg" alt="发票图片预览">
+          <canvas class="image-canvas-overlay" id="overlayCanvas"></canvas>
+        </div>
+
+        <!-- Action Bar -->
+        <div class="action-bar" id="actionBar">
+          <button class="btn btn--ghost" id="clearBtn" type="button"
+                  aria-label="清除已上传图片" disabled>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              <line x1="10" y1="11" x2="10" y2="17"/>
+              <line x1="14" y1="11" x2="14" y2="17"/>
+            </svg>
+            清除
+          </button>
+          <button class="btn btn--primary" id="recognizeBtn" type="button"
+                  aria-label="开始识别发票" disabled>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            开始识别
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Right Panel: Result ─────────────────────────── -->
+    <section class="panel" id="resultPanel" aria-label="识别结果">
+      <div class="panel-header">
+        <span class="panel-index">02</span>
+        <h2 class="panel-title">识别结果</h2>
+      </div>
+      <div class="panel-body" id="resultBody">
+
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState">
+          <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <p class="empty-state-text">上传发票图片后点击「开始识别」查看结果</p>
+        </div>
+
+        <!-- Result Content (hidden until results arrive) -->
+        <div id="resultContent" style="display:none">
+
+          <!-- Tab Switch -->
+          <div class="segmented" id="tabSwitch" role="tablist" aria-label="结果视图切换">
+            <button class="segmented-btn segmented-btn--active" id="tabAnnotation"
+                    role="tab" aria-selected="true" data-tab="annotation">
+              <svg class="icon icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              原图标注
+            </button>
+            <button class="segmented-btn" id="tabTable"
+                    role="tab" aria-selected="false" data-tab="table">
+              <svg class="icon icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
+              结构化表格
+            </button>
+          </div>
+
+          <!-- Annotation View -->
+          <div id="annotationView" role="tabpanel" aria-label="原图标注视图">
+            <div style="padding: var(--sp-md) 0;">
+              <p style="font-size:var(--fs-sm);color:var(--color-muted);">
+                识别区域已标注在左侧原图上，红色框线标出 OCR 检测到的文字区域。
+              </p>
+            </div>
+          </div>
+
+          <!-- Table View -->
+          <div id="tableView" role="tabpanel" aria-label="结构化表格视图" style="display:none">
+
+            <!-- Confidence Summary -->
+            <div class="confidence-summary" id="confidenceSummary">
+              <div>
+                <span class="confidence-value" id="confValue">0%</span>
+                <span class="confidence-label">整体置信度</span>
+              </div>
+              <div class="confidence-bar-wrap">
+                <div class="confidence-bar">
+                  <div class="confidence-bar-fill" id="confBarFill" style="width:0%"></div>
+                </div>
+                <div id="reliabilityArea"></div>
+              </div>
+            </div>
+
+            <!-- Field Groups (rendered dynamically) -->
+            <div id="fieldGroups"></div>
+          </div>
+
+          <!-- Export Bar -->
+          <div class="export-bar">
+            <span class="export-label">导出完整数据：</span>
+            <button class="btn btn--sm" id="exportJsonBtn" type="button" aria-label="导出 JSON 文件">
+              <svg class="icon icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+              JSON
+            </button>
+            <button class="btn btn--sm" id="exportCsvBtn" type="button" aria-label="导出 CSV 文件">
+              <svg class="icon icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
+              CSV
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── Footer ──────────────────────────────────────── -->
+  <footer class="footer" role="contentinfo">
+    <em>票析</em> &mdash; 增值税发票 OCR 识别工具 &nbsp;|&nbsp;
+    所有数据仅在本地处理，<em>不上传至任何第三方服务器</em>，识别完毕即从内存清除。
+  </footer>
+
+  <!-- ── Toast ──────────────────────────────────────── -->
+  <div class="toast" id="toast" role="alert" aria-live="assertive"></div>
+
+  <!-- ── Scripts ────────────────────────────────────── -->
+  <script src="/static/app.js"></script>
+</body>
+</html>
