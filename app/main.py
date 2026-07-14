@@ -139,17 +139,12 @@ def create_app(
             # ── 计算整体置信度 ────────────────────────────────────
             total_fields = sum(len(g.fields) for g in groups)
             if total_fields > 0:
-                avg_conf = sum(
-                    f.confidence for g in groups for f in g.fields
-                ) / total_fields
+                avg_conf = sum(f.confidence for g in groups for f in g.fields) / total_fields
             else:
                 avg_conf = 0.0
 
             # ── 构建响应 ────────────────────────────────────────
-            boxes = [
-                {"box": list(r[0]), "text": r[1], "confidence": r[2]}
-                for r in ocr_results
-            ]
+            boxes = [{"box": list(r[0]), "text": r[1], "confidence": r[2]} for r in ocr_results]
 
             return InvoiceResult(
                 groups=groups,

@@ -13,11 +13,24 @@ import sys
 import warnings
 
 # ── 禁止提交的文件后缀 ────────────────────────────────────────
-BLOCKED_SUFFIXES = frozenset({
-    ".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".gif",  # 图片文件
-    ".bin", ".pdparams", ".pdiparams", ".onnx",  # 模型权重
-    ".wav", ".mp3", ".m4a", ".flac",  # 音频文件
-})
+BLOCKED_SUFFIXES = frozenset(
+    {
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".bmp",
+        ".tiff",
+        ".gif",  # 图片文件
+        ".bin",
+        ".pdparams",
+        ".pdiparams",
+        ".onnx",  # 模型权重
+        ".wav",
+        ".mp3",
+        ".m4a",
+        ".flac",  # 音频文件
+    }
+)
 
 # ── 正则扫描规则 ──────────────────────────────────────────────
 PRIVATE_KEY = re.compile(r"BEGIN [A-Z ]*PRIVATE KEY")
@@ -36,13 +49,18 @@ REAL_COMPANY = re.compile(
 
 # ── 排除路径 ────────────────────────────────────────────────────
 # 这些文件不扫描（文档和配置中允许包含示例路径）
-EXCLUDE_PATHS = frozenset({
-    "README.md",
-    "README_en.md",
-    "CONTRIBUTING.md",
-    "SECURITY.md",
-    ".env.example",
-})
+EXCLUDE_PATHS = frozenset(
+    {
+        "README.md",
+        "README_en.md",
+        "CONTRIBUTING.md",
+        "CODE_OF_CONDUCT.md",
+        "SECURITY.md",
+        "THIRD_PARTY_NOTICES.md",
+        "scripts/privacy_scan.py",
+        ".env.example",
+    }
+)
 
 
 def tracked_files() -> list[str]:

@@ -53,6 +53,7 @@ class OCRRunner:
                 # ── 检测实际使用的设备 ────────────────────────
                 try:
                     import paddle
+
                     if paddle.device.get_device() != "cpu":
                         self._device = "cuda"
                     else:
