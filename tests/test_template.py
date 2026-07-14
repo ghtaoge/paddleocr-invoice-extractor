@@ -6,6 +6,7 @@ from app.template import (
     FIELD_DEFINITIONS,
     InvoiceTemplate,
     _classify_region,
+    _is_on_same_line,
     evaluate_reliability,
 )
 
@@ -32,6 +33,25 @@ class TestClassifyRegion:
         assert _classify_region(0.95, 1.0) == "footer"
 
 
+class TestIsOnSameLine:
+    """判断两个文字框是否在同一行。"""
+
+    def test_same_y(self) -> None:
+        box1 = (10, 100, 200, 120)
+        box2 = (210, 100, 400, 120)
+        assert _is_on_same_line(box1, box2)
+
+    def test_close_y(self) -> None:
+        box1 = (10, 100, 200, 120)
+        box2 = (210, 105, 400, 125)
+        assert _is_on_same_line(box1, box2)
+
+    def test_different_y(self) -> None:
+        box1 = (10, 100, 200, 120)
+        box2 = (210, 200, 400, 220)
+        assert not _is_on_same_line(box1, box2)
+
+
 class TestFieldDefinitions:
     """字段定义完整性检查。"""
 
@@ -52,40 +72,50 @@ class TestInvoiceTemplate:
     def test_empty_ocr_results(self) -> None:
         template = InvoiceTemplate()
         groups = template.map_results([], image_height=1000)
-        # 应返回 4 个空分组
         assert len(groups) == 4
         assert all(len(g.fields) == 0 for g in groups)
 
-    def test_single_keyword_match(self) -> None:
-        """关键词"发票号码"出现在基础信息区，其后紧跟号码值。"""
+    def test_keyword_and_value_separate(self) -> None:
+        """关键词和值分开识别——关键词框和值框在同一行右侧。"""
         template = InvoiceTemplate()
-        # 模拟 OCR 结果：关键词在基础信息区 (y ≈ 0.20 * 1000 = 200)
         ocr_results = [
-            ((100, 200, 200, 220), "发票号码", 0.98),
-            ((210, 200, 300, 220), "12345678", 0.95),
+            ((30, 200, 120, 220), "发票号码", 0.98),
+            ((130, 200, 220, 220), "12345678", 0.95),
         ]
         groups = template.map_results(ocr_results, image_height=1000)
-        basic_group = groups[0]  # 基础信息
+        basic_group = groups[0]
         found = any(f.key == "invoice_number" for f in basic_group.fields)
         assert found
+        inv_num = next(f for f in basic_group.fields if f.key == "invoice_number")
+        assert inv_num.value == "12345678"
+
+    def test_keyword_and_value_combined(self) -> None:
+        """关键词和值合并识别——如 "发票号码12345678"。"""
+        template = InvoiceTemplate()
+        ocr_results = [
+            ((30, 200, 300, 220), "发票号码12345678", 0.97),
+        ]
+        groups = template.map_results(ocr_results, image_height=1000)
+        basic_group = groups[0]
+        found = any(f.key == "invoice_number" for f in basic_group.fields)
+        assert found
+        inv_num = next(f for f in basic_group.fields if f.key == "invoice_number")
+        assert inv_num.value == "12345678"
 
     def test_keyword_in_wrong_region(self) -> None:
         """关键词出现在错误区域时不应匹配。"""
         template = InvoiceTemplate()
-        # "销方名称"关键词出现在购方区 (y ≈ 350, 在 buyer_info 区)
-        # 但销方名称的 expected_region 是 seller_info
         ocr_results = [
             ((100, 350, 200, 370), "销方名称", 0.98),
             ((210, 350, 300, 370), "某公司", 0.95),
         ]
         groups = template.map_results(ocr_results, image_height=1000)
-        seller_group = groups[3]  # 销方信息
+        seller_group = groups[3]
         assert len(seller_group.fields) == 0
 
     def test_multiple_fields_in_same_region(self) -> None:
-        """同一区域内多个关键词应分别匹配。"""
+        """同一区域内多个关键词-值对应分别匹配。"""
         template = InvoiceTemplate()
-        # 基础信息区有多个字段
         ocr_results = [
             ((10, 200, 100, 220), "发票代码", 0.97),
             ((110, 200, 200, 220), "044001900111", 0.96),
@@ -93,8 +123,20 @@ class TestInvoiceTemplate:
             ((110, 230, 200, 250), "12345678", 0.95),
         ]
         groups = template.map_results(ocr_results, image_height=1000)
-        basic_group = groups[0]  # 基础信息
-        assert len(basic_group.fields) >= 1  # 至少匹配到一个
+        basic_group = groups[0]
+        assert len(basic_group.fields) >= 2
+
+    def test_value_with_colon_separator(self) -> None:
+        """关键词后带冒号——如 "发票号码：12345678"。"""
+        template = InvoiceTemplate()
+        ocr_results = [
+            ((30, 200, 300, 220), "发票号码：12345678", 0.97),
+        ]
+        groups = template.map_results(ocr_results, image_height=1000)
+        basic_group = groups[0]
+        if any(f.key == "invoice_number" for f in basic_group.fields):
+            inv_num = next(f for f in basic_group.fields if f.key == "invoice_number")
+            assert inv_num.value == "12345678"
 
 
 class TestEvaluateReliability:
@@ -110,7 +152,7 @@ class TestEvaluateReliability:
                 confidence=0.95,
                 desensitized=f"val{i}",
             )
-            for i in range(16)  # 全部 16 个字段
+            for i in range(16)
         ]
         groups = [FieldGroup(name="测试", fields=fields)]
         settings = Settings()
@@ -127,7 +169,6 @@ class TestEvaluateReliability:
 
     def test_low_reliability_low_confidence(self) -> None:
         """置信度低 → low + "识别置信度偏低"。"""
-        # 生成足够多的低置信度字段使平均值低于 0.80
         low_conf_fields = [
             InvoiceField(
                 key=f"field_{i}",
